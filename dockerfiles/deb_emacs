@@ -61,6 +61,6 @@ RUN chsh -s /bin/zsh user
 
 # Set working directory for user
 WORKDIR /home/user
-
+ENV HOME="/home/user" TERM="xterm" USER="user" SHELL="/bin/zsh" EDITOR="emacs" LANG="en_US.UTF-8" LC_ALL="C"
 # Set default shell and start as "user"
 CMD ["/bin/zsh"]
