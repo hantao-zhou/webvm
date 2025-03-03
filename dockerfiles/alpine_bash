@@ -20,7 +20,8 @@ RUN apk update && apk add --no-cache \
     curl \
     shadow \
     ncurses \
-    fontconfig
+    fontconfig \
+    bash
 
 # Set a root password
 RUN echo "root:root" | chpasswd
