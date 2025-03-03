@@ -1,15 +1,20 @@
-# Use the latest Ubuntu image
+# Use Debian Buster (i386) as the base image
 FROM --platform=i386 i386/debian:buster
+
+# Set non-interactive mode for installations
 ARG DEBIAN_FRONTEND=noninteractive
-# Set the maintainer (optional)
-# LABEL maintainer="Your Name <your.email@example.com>"
 
-# Set the non-interactive frontend to avoid interactive prompts during installation
-ENV DEBIAN_FRONTEND=noninteractive
-
-# Update the package lists and install required packages
+# Update system and install required dependencies
 RUN apt update && apt upgrade -y && \
-    apt install -y git emacs tmux curl wget unzip zsh fonts-powerline && \
+    apt install -y \
+    git \
+    emacs \
+    tmux \
+    curl \
+    wget \
+    unzip \
+    bash-completion \
+    fonts-powerline && \
     rm -rf /var/lib/apt/lists/*
 
 # Install Spacemacs
@@ -20,12 +25,12 @@ RUN git clone https://github.com/gpakosz/.tmux.git ~/.tmux && \
     ln -s -f ~/.tmux/.tmux.conf ~/.tmux.conf && \
     cp ~/.tmux/.tmux.conf.local ~/.tmux.conf.local
 
-# Install Oh My Zsh
-RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended && \
-    chsh -s $(which zsh)
+# Install Oh My Bash
+RUN bash -c "$(curl -fsSL https://raw.githubusercontent.com/ohmybash/oh-my-bash/master/tools/install.sh)" && \
+    echo 'source ~/.bashrc' >> ~/.bash_profile
 
-# Set default shell to Zsh
-SHELL ["/bin/zsh", "-c"]
+# Set Bash as default shell
+SHELL ["/bin/bash", "-c"]
 
 # Set default command
-CMD ["/bin/zsh"]
+CMD ["/bin/bash"]
