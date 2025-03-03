@@ -1,36 +1,66 @@
-# Use Debian Buster (i386) as the base image
-FROM --platform=i386 i386/debian:buster
+# Use Alpine Linux (i386) as the base image
+ARG TARGETPLATFORM=linux/386
+FROM alpine:latest
 
-# Set non-interactive mode for installations
+# Set non-interactive mode
 ARG DEBIAN_FRONTEND=noninteractive
 
-# Update system and install required dependencies
-RUN apt update && apt upgrade -y && \
-    apt install -y \
-    git \
-    emacs \
+# Install required packages including Tmux, Git, Emacs, Zsh, and dependencies
+RUN apk update && apk add --no-cache \
     tmux \
-    curl \
+    git \
+    emacs-nox \
+    libxaw \
+    libxmu \
+    libice \
+    libsm \
+    libxpm \
+    zsh \
     wget \
-    unzip \
-    bash-completion \
-    fonts-powerline && \
-    rm -rf /var/lib/apt/lists/*
+    curl \
+    shadow \
+    ncurses \
+    fontconfig
 
-# Install Spacemacs
-RUN git clone https://github.com/syl20bnr/spacemacs ~/.emacs.d
+# Set a root password
+RUN echo "root:root" | chpasswd
+
+
+# Create a user and set a password
+RUN useradd -m user && echo "user:password" | chpasswd
+
+# Fix `su` permission issue
+RUN chmod 4755 /bin/su
+
+# Allow `user` to use `sudo` without a password
+RUN echo "user ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+
+# Switch to the user
+USER user
+WORKDIR /home/user
+
+# Ensure necessary directories exist before writing Powerline fonts
+RUN mkdir -p ~/.local/share/fonts ~/.config/fontconfig/conf.d && \
+    wget -qO ~/.local/share/fonts/PowerlineSymbols.otf https://github.com/powerline/powerline/raw/develop/font/PowerlineSymbols.otf && \
+    wget -qO ~/.config/fontconfig/conf.d/10-powerline-symbols.conf https://github.com/powerline/powerline/raw/develop/font/10-powerline-symbols.conf && \
+    fc-cache -vf ~/.local/share/fonts
+
+# Install Oh My Zsh
+RUN sh -c "$(wget -O- https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
 
 # Install Oh My Tmux
 RUN git clone https://github.com/gpakosz/.tmux.git ~/.tmux && \
     ln -s -f ~/.tmux/.tmux.conf ~/.tmux.conf && \
     cp ~/.tmux/.tmux.conf.local ~/.tmux.conf.local
 
-# Install Oh My Bash
-RUN bash -c "$(curl -fsSL https://raw.githubusercontent.com/ohmybash/oh-my-bash/master/tools/install.sh)" && \
-    echo 'source ~/.bashrc' >> ~/.bash_profile
+# Install Spacemacs
+RUN git clone https://github.com/syl20bnr/spacemacs ~/.emacs.d
 
-# Set Bash as default shell
-SHELL ["/bin/bash", "-c"]
+# Set Zsh as default shell
+RUN chsh -s /bin/zsh user
 
-# Set default command
-CMD ["/bin/bash"]
+# Set working directory for user
+WORKDIR /home/user
+
+# Set default shell and start as "user"
+CMD ["/bin/zsh"]
